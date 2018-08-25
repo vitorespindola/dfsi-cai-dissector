@@ -37,6 +37,11 @@ do
     F.P25SuperFrame = ProtoField.uint8("dfsi.cai.p25.superframe","Super frame",base.DEC)
     F.P25Busy = ProtoField.uint8("dfsi.cai.p25.busy","Busy",base.DEC)
 
+    -- Voter Report
+    F.VoterReportReceiverNumber = ProtoField.uint8("dfsi.cai.voterreport.receiver","Voter Report Receiver Number",base.DEC)
+    F.VoterReportDisabled = ProtoField.bool("dfsi.cai.voterreport.disabled","Voter Report Disabled")
+    F.VoterReportReceiverStatus = ProtoField.uint8("dfsi.cai.voterreport.status","Voter Report Receiver Status",base.DEC)
+
     function dfsi_cai.dissector(tvb, pinfo, tree)
         local subtree = tree:add(dfsi_cai, tvb(), "DFSI CAI")
         subtree:add(F.Signal, tvb(0,1):bitfield(0,1))
@@ -55,6 +60,8 @@ do
 
             if block_pt_type == 0 then
                 dissect_cai_voice(tvb, pinfo, subtree)
+            elseif block_pt_type == 12 then
+                dissect_voter_report(tvb, pinfo, subtree)
             end
         end
         -- subtree:add(F.Data,tvb(0,tvb:len()))
@@ -78,6 +85,14 @@ do
         subtree:add(F.P25ReportLost, tvb(14,1):bitfield(7,1))
         subtree:add(F.P25ReportErrorE4, tvb(15,1):bitfield(0,1))
         subtree:add(F.P25ReportErrorE1, tvb(15,1):bitfield(1,3))
+    end
+
+    function dissect_voter_report(tvb, pinfo, tree)
+        tree:add(F.VoterReportReceiverNumber, tvb(2,1))
+        tree:add(F.VoterReportDisabled, tvb(3,1):bitfield(0,1))
+
+        local voter_report_receiver_status = tvb(3,1):bitfield(1,7)
+        tree:add(F.VoterReportReceiverStatus, voter_report_receiver_status, nil, label(labels_voter_report_status, voter_report_receiver_status))
     end
 
     -- register dissector to dynamic payload type dissectorTable
@@ -147,3 +162,13 @@ labels_cai_frame_status[0] = "Unknown, use for talk-around"
 labels_cai_frame_status[2] = "Unknown, use for inbound or outbound"
 labels_cai_frame_status[3] = "Inbound Channel is Idle"
 
+
+labels_voter_report_status = {}
+labels_voter_report_status[0] = "NO_SIGNAL"
+labels_voter_report_status[1] = "SELECTED"
+labels_voter_report_status[2] = "GOOD_P25"
+labels_voter_report_status[3] = "GOOD_FM"
+labels_voter_report_status[4] = "BAD_P25"
+labels_voter_report_status[5] = "BAD_FM"
+labels_voter_report_status[6] = "NOT_EQUIPPED"
+labels_voter_report_status[7] = "FAILED"
