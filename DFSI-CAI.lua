@@ -37,6 +37,13 @@ do
     F.P25SuperFrame = ProtoField.uint8("dfsi.cai.p25.superframe","Super frame",base.DEC)
     F.P25Busy = ProtoField.uint8("dfsi.cai.p25.busy","Busy",base.DEC)
 
+    -- Start of stream
+    F.StartStreamNID = ProtoField.uint8("dfsi.cai.startstream.nid","Start of stream NID", base.HEX)
+    F.StartStreamNAC = ProtoField.uint8("dfsi.cai.startstream.nac","Start of stream NAC", base.HEX)
+    F.StartStreamDUID = ProtoField.uint8("dfsi.cai.startstream.duid","Start of stream DUID", base.HEX)
+    F.StartStreamReserve = ProtoField.uint8("dfsi.cai.startstream.reserve","Start of stream reserve", base.DEC)
+    F.StartStreamErrorCount = ProtoField.uint8("dfsi.cai.startstream.errorcnt","Start of stream error count", base.DEC)
+
     -- Voter Report
     F.VoterReportReceiverNumber = ProtoField.uint8("dfsi.cai.voterreport.receiver","Voter Report Receiver Number",base.DEC)
     F.VoterReportDisabled = ProtoField.bool("dfsi.cai.voterreport.disabled","Voter Report Disabled")
@@ -60,6 +67,8 @@ do
 
             if block_pt_type == 0 then
                 dissect_cai_voice(tvb, pinfo, subtree)
+            elseif block_pt_type == 9 then
+                dissect_start_of_stream(tvb, pinfo, subtree)
             elseif block_pt_type == 12 then
                 dissect_voter_report(tvb, pinfo, subtree)
             end
@@ -85,6 +94,14 @@ do
         subtree:add(F.P25ReportLost, tvb(14,1):bitfield(7,1))
         subtree:add(F.P25ReportErrorE4, tvb(15,1):bitfield(0,1))
         subtree:add(F.P25ReportErrorE1, tvb(15,1):bitfield(1,3))
+    end
+
+    function dissect_start_of_stream(tvb, pinfo, tree)
+        tree:add(F.StartStreamNID, tvb(2,2))
+        tree:add(F.StartStreamNAC, tvb(2,2):bitfield(0,12))
+        tree:add(F.StartStreamDUID, tvb(2,2):bitfield(12,4))
+        tree:add(F.StartStreamReserve, tvb(4,1):bitfield(0,4))
+        tree:add(F.StartStreamErrorCount, tvb(4,1):bitfield(4,4))
     end
 
     function dissect_voter_report(tvb, pinfo, tree)
