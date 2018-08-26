@@ -28,6 +28,9 @@ do
     -- P25 CAI
     F.P25FrameType = ProtoField.uint8("dfsi.cai.p25.frametype","CAI Voice Frame Type",base.HEX,nil)
     F.P25Voice = ProtoField.bytes("dfsi.cai.p25.voice","IMBE Voice Payload")
+    F.P25LinkControl = ProtoField.bytes("dfsi.cai.p25.linkcontrol","Link Control")
+    F.P25LowSpeedData = ProtoField.bytes("dfsi.cai.p25.lowspeeddata","Low Speed Data")
+    F.P25EncryptionSync = ProtoField.bytes("dfsi.cai.p25.encryptionsync","Encryption Sync")
     F.P25ReportErrorTotal = ProtoField.uint8("dfsi.cai.p25.report.error_total","Report Error Total",base.DEC,nil)
     F.P25ReportErrorScaled = ProtoField.uint8("dfsi.cai.p25.report.error_scaled","Report Error Total",base.DEC,nil)
     F.P25ReportMute = ProtoField.bool("dfsi.cai.p25.report.mute","Report Mute")
@@ -107,6 +110,14 @@ do
         subtree:add(F.P25SuperFrame, tvb(15,1):bitfield(4,2))
 
         subtree:add(F.P25Voice,tvb(3,11))
+
+        if cai_frame_type >= 100 and cai_frame_type <= 105 then
+            subtree:add(F.P25LinkControl,tvb(16,3))
+        elseif cai_frame_type == 106 or cai_frame_type == 115 then
+            subtree:add(F.P25LowSpeedData,tvb(16,2))
+        elseif cai_frame_type >= 109 and cai_frame_type <= 114 then
+            subtree:add(F.P25EncryptionSync,tvb(16,3))
+        end
 
         local cai_frame_status = tvb(15,1):bitfield(6,2)
         subtree:add(F.P25Busy, cai_frame_status, nil, label(labels_cai_frame_status, cai_frame_status))
