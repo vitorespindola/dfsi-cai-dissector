@@ -14,6 +14,16 @@ This dissector is based on SMPTE ST 2110-20 dissector found in https://github.co
 
 1. You will now see the DFSI CAI Data dissection of the RTP payload
 
+## TODO
+
+* Register a dissector for FSC packages
+* Handle non CAI voice packages(uLaw voice)
+* Dissect Link Control, Encryption Sync and Low Speed Data
+* Color for packages with errors
+* Voter control
+* Voice headers 1 and 2
+* Manufacturer specific data
+
 ## License
 
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
