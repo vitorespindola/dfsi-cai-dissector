@@ -50,6 +50,9 @@ do
     F.VoterReportReceiverStatus = ProtoField.uint8("dfsi.cai.voterreport.status","Voter Report Receiver Status",base.DEC)
 
     function dfsi_cai.dissector(tvb, pinfo, tree)
+        pinfo.cols.protocol:set('DFSI')
+        pinfo.cols.info:set('DFSI')
+
         local subtree = tree:add(dfsi_cai, tvb(), "DFSI CAI")
         subtree:add(F.Signal, tvb(0,1):bitfield(0,1))
 
@@ -65,19 +68,39 @@ do
             block_pt_type = tvb(1,1):bitfield(1,7)
             subtree:add(F.BlockPayloadType, block_pt_type, nil, label(labels_block_pt, block_pt_type))
 
-            if block_pt_type == 0 then
+            if block_pt_type == BLOCK_PT_CAI_VOICE then
+                pinfo.cols.info:append(', CAI Voice')
                 dissect_cai_voice(tvb, pinfo, subtree)
-            elseif block_pt_type == 9 then
+            elseif block_pt_type == BLOCK_PT_VOICE_HDR1 then
+                pinfo.cols.info:append(', Voice Header Part 1')
+                -- TODO
+            elseif block_pt_type == BLOCK_PT_VOICE_HDR2 then
+                pinfo.cols.info:append(', Voice Header Part 2')
+                -- TODO
+            elseif block_pt_type == BLOCK_PT_START_STREAM then
+                pinfo.cols.info:append(', Start of Stream')
                 dissect_start_of_stream(tvb, pinfo, subtree)
-            elseif block_pt_type == 12 then
+            elseif block_pt_type == BLOCK_PT_END_STREAM then
+                pinfo.cols.info:append(', End of Stream')
+                dissect_start_of_stream(tvb, pinfo, subtree)
+            elseif block_pt_type == BLOCK_PT_VOTER_REPORT then
+                pinfo.cols.info:append(', Voter Report')
                 dissect_voter_report(tvb, pinfo, subtree)
+            elseif block_pt_type == BLOCK_PT_VOTER_CONTROL then
+                pinfo.cols.info:append(', Voter Control')
+                -- TODO
+            elseif block_pt_type == BLOCK_PT_TX_KEY_ACK then
+                pinfo.cols.info:append(', TX Key Acknowledge')
+            elseif block_pt_type >= BLOCK_PT_MANUFACTURER_SPECIFIC_START and block_pt_type <= BLOCK_PT_MANUFACTURER_SPECIFIC_END then
+                pinfo.cols.info:append(', Manufacturer specific data')
+                -- TODO
             end
         end
-        -- subtree:add(F.Data,tvb(0,tvb:len()))
     end
 
     function dissect_cai_voice(tvb, pinfo, tree)
         local cai_frame_type = tvb(2,1):uint()
+        pinfo.cols.info:append(', '.. labels_cai_frame_type[cai_frame_type])
         local subtree = tree:add(dfsi_cai, tvb(), labels_cai_frame_type[cai_frame_type])
 
         subtree:add(F.P25FrameType, cai_frame_type, nil, label(labels_cai_frame_type, cai_frame_type))
@@ -136,6 +159,17 @@ function label(labels, value, default)
 
     return "(".. l ..")"
 end
+
+BLOCK_PT_CAI_VOICE = 0
+BLOCK_PT_VOICE_HDR1 = 6
+BLOCK_PT_VOICE_HDR2 = 7
+BLOCK_PT_START_STREAM = 9
+BLOCK_PT_END_STREAM = 10
+BLOCK_PT_VOTER_REPORT = 12
+BLOCK_PT_VOTER_CONTROL = 13
+BLOCK_PT_TX_KEY_ACK = 14
+BLOCK_PT_MANUFACTURER_SPECIFIC_START = 63
+BLOCK_PT_MANUFACTURER_SPECIFIC_END = 127
 
 labels_compact = {}
 labels_compact[0] = "Reserved"
