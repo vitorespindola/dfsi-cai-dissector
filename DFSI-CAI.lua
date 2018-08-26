@@ -85,7 +85,6 @@ do
                 dissect_start_of_stream(tvb, pinfo, subtree)
             elseif block_pt_type == BLOCK_PT_END_STREAM then
                 pinfo.cols.info:append(', End of Stream')
-                dissect_start_of_stream(tvb, pinfo, subtree)
             elseif block_pt_type == BLOCK_PT_VOTER_REPORT then
                 pinfo.cols.info:append(', Voter Report')
                 dissect_voter_report(tvb, pinfo, subtree)
